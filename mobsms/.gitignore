@@ -8,6 +8,9 @@ example/ios/Flutter/flutter_export_environment.sh
 **/pubspec.lock
 
 build/
+ohos/build/
+ohos/oh-package-lock.json5
+**/oh_modules
 .idea/
 **/.idea/
 **/gradle/

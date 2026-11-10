@@ -26,3 +26,5 @@ flutter:
         pluginClass: MobsmsPlugin
       ios:
         pluginClass: MobsmsPlugin
+      ohos:
+        pluginClass: MobsmsPlugin

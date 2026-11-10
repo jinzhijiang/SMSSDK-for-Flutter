@@ -1,0 +1,11 @@
+{
+  "module": {
+    "name": "mobsms",
+    "type": "har",
+    "description": "Mob SMS OHOS plugin for HarmonyOS NEXT",
+    "deviceTypes": [
+      "phone",
+      "tablet"
+    ]
+  }
+}
