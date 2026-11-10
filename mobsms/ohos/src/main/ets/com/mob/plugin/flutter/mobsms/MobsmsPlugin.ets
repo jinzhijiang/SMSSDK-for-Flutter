@@ -17,6 +17,7 @@ const KEY_CODE = 'code';
 const KEY_MSG = 'msg';
 const KEY_STATUS = 'status';
 const KEY_VERSION = 'version';
+const KEY_SMART = 'smart';
 const KEY_COUNTRIES = 'countries';
 const KEY_ZONE = 'zone';
 const KEY_RULE = 'rule';
@@ -55,9 +56,14 @@ function bridgeError(method: string, reason: string): Map<string, Object> {
 }
 
 function sdkError(e: BusinessError): Map<string, Object> {
-  const code: number = e.code;
-  const message: string = e.message;
-  const msg: string = message.length > 0 ? message : `${code}`;
+  // 非 BusinessError 的异常可能没有 code / message，统一兜底成 700，避免回给 Dart 的字段是 undefined
+  const code: number = typeof e.code === 'number' ? e.code : BRIDGE_ERR;
+  const message: string = typeof e.message === 'string' ? e.message : '';
+  const data: string = e.data !== undefined && e.data !== null ? `${e.data}` : '';
+  let msg: string = message.length > 0 ? message : `${code}`;
+  if (data.length > 0 && data !== message) {
+    msg = `${msg} (${data})`;
+  }
   return errorResponse(code, msg);
 }
 
@@ -151,12 +157,12 @@ export default class MobsmsPlugin implements FlutterPlugin, MethodCallHandler {
     const phoneNumber: string = call.argument(ARG_PHONE_NUMBER) as string;
     const tempCode: string = call.argument(ARG_TEMP_CODE) as string;
     try {
-      const sent: boolean = await SmsSDK.getVerificationCode(zone, phoneNumber, tempCode);
-      if (sent) {
-        result.success(successResponse(new Map<string, Object>()));
-      } else {
-        result.success(bridgeError('getTextCode', 'getVerificationCode returned false'));
-      }
+      // SDK 的返回值是「是否智能验证（免短信）」：false 表示正常下发了短信，失败会走 reject。
+      // 与 Android 一致，成功时回传 { ret: { smart } }。
+      const smart: boolean = await SmsSDK.getVerificationCode(zone, phoneNumber, tempCode);
+      const ret: Map<string, Object> = new Map<string, Object>();
+      ret.set(KEY_SMART, smart === true);
+      result.success(successResponse(ret));
     } catch (err) {
       const e: BusinessError = err as BusinessError;
       result.success(sdkError(e));
